@@ -42,7 +42,7 @@ pip-audit
 The easiest way to use the application is through the interactive web interface:
 
 ```bash
-streamlit run ui.py
+streamlit run streamlit_app.py
 ```
 
 This will open a web browser where you can:
@@ -71,6 +71,9 @@ In the UI sidebar, switch **Data source** to **AppSheet API**, then provide:
 - **Application access key** (don’t commit this)
 
 The app fetches rows via the AppSheet “Find” API and maps them into the required columns (`Member ID`, `Full Name`, `Membership Type`, `Adult`, `Child`).
+
+### Streamlit Cloud deployment
+If you deploy this repo on Streamlit Cloud, set the **main file path** to `streamlit_app.py`.
 
 ### 💻 Command Line
 
