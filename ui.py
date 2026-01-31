@@ -9,6 +9,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 from typing import Optional
+import traceback
 
 import pandas as pd
 import streamlit as st
@@ -198,6 +199,8 @@ if "_tmp_data_path" not in st.session_state:
     st.session_state._tmp_data_path = None
 if "_tmp_banner_path" not in st.session_state:
     st.session_state._tmp_banner_path = None
+if "_last_appsheet_error" not in st.session_state:
+    st.session_state._last_appsheet_error = None
 
 def _reset_loaded_data():
     st.session_state.members_df = None
@@ -259,13 +262,15 @@ if source == "AppSheet API":
                 appsheet_key = st.text_input("Access key", value="", type="password")
         fetch = st.form_submit_button("Fetch members")
     if fetch:
+        st.session_state._last_appsheet_error = None
         try:
-            df = load_members_dataframe_appsheet(
-                app_id=appsheet_app_id,
-                table_name=appsheet_table,
-                application_access_key=appsheet_key,
-                region=appsheet_region,
-            )
+            with st.spinner("Fetching members from AppSheet…"):
+                df = load_members_dataframe_appsheet(
+                    app_id=appsheet_app_id,
+                    table_name=appsheet_table,
+                    application_access_key=appsheet_key,
+                    region=appsheet_region,
+                )
             st.session_state.members_df = df
             stats = getattr(df, "attrs", {}).get("load_stats")
             if stats:
@@ -277,9 +282,16 @@ if source == "AppSheet API":
             else:
                 st.success(f"Loaded {len(df)} members from AppSheet")
         except (ValueError, RuntimeError, ImportError) as e:
+            st.session_state._last_appsheet_error = traceback.format_exc()
             st.error(f"Error fetching from AppSheet: {e}")
         except Exception as e:
+            st.session_state._last_appsheet_error = traceback.format_exc()
             st.error(f"Unexpected error fetching from AppSheet: {e}")
+
+    # Always show last error details if present (helps debugging Streamlit Cloud blanks)
+    if st.session_state._last_appsheet_error:
+        with st.expander("Show AppSheet error details", expanded=False):
+            st.code(st.session_state._last_appsheet_error)
 else:
     st.markdown("### Upload file (Excel/CSV)")
     st.caption("Uploaded file must match the default template format (same for Excel and CSV).")
