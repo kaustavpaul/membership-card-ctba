@@ -10,6 +10,7 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 import traceback
+import time
 
 import pandas as pd
 import streamlit as st
@@ -33,6 +34,13 @@ from utils import safe_pdf_filename
 
 _UI_DIR = Path(__file__).resolve().parent
 _FALLBACK_CSV = Path.home() / "Downloads" / "CTBA Annual Membership Mock Master List - Form Responses 1.csv"
+
+# Startup timing (logged to stdout for Streamlit Cloud logs)
+_UI_T0 = time.perf_counter()
+def _ui_log(msg: str) -> None:
+    print(f"[ui] +{time.perf_counter() - _UI_T0:.3f}s {msg}", flush=True)
+
+_ui_log("ui.py start")
 
 # Page config
 st.set_page_config(
@@ -150,6 +158,7 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+_ui_log("rendered CSS/theme")
 
 # --- Header ---
 st.markdown(
@@ -165,6 +174,7 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+_ui_log("rendered header")
 
 # Sidebar (collapsible in Streamlit UI)
 with st.sidebar:
@@ -172,6 +182,7 @@ with st.sidebar:
         st.markdown("**CTBA Membership Card Generator**")
         st.markdown("Built for Central Texas Bengali Association")
         st.markdown("Created by Kaustav Paul")
+_ui_log("rendered sidebar")
 
 # Initialize session state
 if 'members_df' not in st.session_state:
@@ -224,6 +235,7 @@ if "data_source" not in st.session_state:
     st.session_state.data_source = "AppSheet API"
 
 st.subheader("Data source")
+_ui_log("before data source radio")
 source = st.radio(
     "Choose where to load members from",
     options=["AppSheet API", "Upload file (Excel/CSV)"],
@@ -233,6 +245,7 @@ source = st.radio(
     label_visibility="collapsed",
     on_change=_reset_loaded_data,
 )
+_ui_log("rendered data source section")
 
 # Optional mobile-friendly rendering tweaks
 mobile_mode = st.checkbox("Mobile-friendly layout", value=False, help="Reduces multi-column sections for small screens.")
