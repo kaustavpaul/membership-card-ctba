@@ -13,23 +13,10 @@ import sys
 import time
 import random
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any
 from urllib.parse import quote
 
-import pandas as pd
-import qrcode
-from qrcode.image.pil import PilImage
-from PIL import Image, ImageDraw, ImageFont
-from reportlab.lib.units import inch
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfgen import canvas
-
 from config import CARD_FONT_SIZE, NAME_TO_MEMBER_GAP_PX
-
-try:
-    import requests  # type: ignore
-except Exception:  # pragma: no cover
-    requests = None  # type: ignore
 
 # Design constants
 _APP_DIR = Path(__file__).resolve().parent
@@ -53,7 +40,7 @@ def make_member_id(name: str, email: str, membership_type: str) -> str:
     return f"CTBA2026{_san(name)}{_san(email)}{_san(membership_type)}"
 
 
-def _find_column(df: pd.DataFrame, exact: Optional[str], *subs) -> Optional[str]:
+def _find_column(df: Any, exact: Optional[str], *subs) -> Optional[str]:
     """Find column by exact name or by substrings (all must match, case-insensitive)."""
     df_cols = [str(c).strip() for c in df.columns]
     if exact and exact in df_cols:
@@ -68,7 +55,7 @@ def _find_column(df: pd.DataFrame, exact: Optional[str], *subs) -> Optional[str]
     return None
 
 
-def load_members_dataframe(path: str, sheet: str = "Sheet1") -> pd.DataFrame:
+def load_members_dataframe(path: str, sheet: str = "Sheet1"):
     """
     Load members from Excel or CSV into a DataFrame with columns:
     Name, Member_ID, Membership_Type, Adult, Child.
@@ -76,6 +63,8 @@ def load_members_dataframe(path: str, sheet: str = "Sheet1") -> pd.DataFrame:
       If no Member ID column exists, raises an error (source-of-truth is the sheet).
     - CSV: expects name and member-id-like columns; Member_ID used as-is.
     """
+    import pandas as pd
+
     p = Path(path)
     suf = p.suffix.lower()
     if suf in (".xlsx", ".xls"):
@@ -234,7 +223,7 @@ def load_members_dataframe_appsheet(
     run_as_user_email: Optional[str] = None,
     timeout_s: int = 30,
     max_attempts: int = 2,
-) -> pd.DataFrame:
+) -> Any:
     """
     Load members from AppSheet REST API into a DataFrame with columns:
     Name, Member_ID, Membership_Type, Adult, Child.
@@ -242,12 +231,15 @@ def load_members_dataframe_appsheet(
     Uses the AppSheet "Find" action:
       POST https://{region}/api/v2/apps/{appId}/tables/{tableName}/Action?applicationAccessKey=...
     """
-    if requests is None:
+    import pandas as pd
+    try:
+        import requests  # type: ignore
+    except Exception as e:  # pragma: no cover
         raise ImportError(
             "AppSheet integration requires 'requests'. Install it with:\n"
             "  pip install requests\n"
             "Or: pip install -r requirements.txt"
-        )
+        ) from e
 
     app_id = (app_id or "").strip()
     table_name = (table_name or "").strip()
@@ -505,16 +497,19 @@ class MembershipCardGenerator:
         # Don't mkdir here; UI may not want any output folder created.
         # CLI path creation is handled right before writing files.
         self.member_year = member_year
-        self._font_name: Optional[ImageFont.ImageFont] = None
-        self._font_member: Optional[ImageFont.ImageFont] = None
-        self._banner_img_cache: Optional[Image.Image] = None
+        self._font_name: Optional[Any] = None
+        self._font_member: Optional[Any] = None
+        self._banner_img_cache: Optional[Any] = None
         
         # Card dimensions (portrait style: 2.5" x 4")
-        self.card_width = 2.5 * inch
-        self.card_height = 4 * inch
+        inch_pt = 72.0  # reportlab's inch unit in points
+        self.card_width = 2.5 * inch_pt
+        self.card_height = 4 * inch_pt
 
     def _get_fonts(self, font_size: int):
         """Load and cache fonts once per generator instance."""
+        from PIL import ImageFont
+
         if self._font_name is not None and self._font_member is not None:
             return self._font_name, self._font_member
 
@@ -568,6 +563,8 @@ class MembershipCardGenerator:
 
     def load_banner_image(self) -> Image.Image:
         """Load and cache banner image once per generator instance."""
+        from PIL import Image
+
         if self._banner_img_cache is not None:
             return self._banner_img_cache
         banner_img = Image.open(self.banner_path)
@@ -605,7 +602,7 @@ class MembershipCardGenerator:
             sys.exit(1)
         return members
     
-    def generate_qr_code(self, member_id: str, name: str) -> Image.Image:
+    def generate_qr_code(self, member_id: str, name: str):
         """
         Generate QR code for a member.
         
@@ -619,6 +616,8 @@ class MembershipCardGenerator:
         # QR code data: ONLY the Member ID
         qr_data = str(member_id).strip()
         
+        import qrcode
+
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -635,12 +634,12 @@ class MembershipCardGenerator:
         self,
         name: str,
         member_id: str,
-        qr_img: Image.Image,
-        banner_img: Image.Image,
+        qr_img,
+        banner_img,
         membership_type: str = "",
         adult: str = "",
         child: str = "",
-    ) -> Image.Image:
+    ):
         """
         Create a membership card: banner on top, QR code at center, then:
         Full Name, 'Annual Member CTBA 2026', Membership Type, Adult/Kids counts.
@@ -662,9 +661,11 @@ class MembershipCardGenerator:
         card_height_px = int(self.card_height * DPI / 72)
 
         # Simple RGB card background (keeps PDF rendering straightforward)
+        from PIL import Image, ImageDraw
+
         card = Image.new("RGB", (card_width_px, card_height_px), BACKGROUND_COLOR)
         draw = ImageDraw.Draw(card)
-        border_radius = int(0.08 * inch * DPI / 72)  # small curve for a rounded-corner impression
+        border_radius = int(0.08 * DPI)  # small curve for a rounded-corner impression
         
         # === TOP: BANNER ===
         top_third_height = card_height_px // 3
@@ -689,7 +690,7 @@ class MembershipCardGenerator:
         # Vertical center of the full card
         qr_y = (card_height_px - qr_size) // 2
         qr_x = (card_width_px - qr_size) // 2
-        qr_padding = int(0.08 * inch * DPI / 72)
+        qr_padding = int(0.08 * DPI)
         qr_bg = Image.new("RGB", (qr_size + qr_padding * 2, qr_size + qr_padding * 2), (255, 255, 255))
         qr_bg.paste(qr_resized, (qr_padding, qr_padding))
         card.paste(qr_bg, (qr_x - qr_padding, qr_y - qr_padding))
@@ -786,6 +787,9 @@ class MembershipCardGenerator:
         Returns:
             PDF bytes
         """
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.utils import ImageReader
+
         img = card_img.convert("RGB")
         buf = BytesIO()
         c = canvas.Canvas(buf, pagesize=(self.card_width, self.card_height))
