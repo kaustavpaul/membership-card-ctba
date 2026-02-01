@@ -18,10 +18,21 @@ import streamlit as st
 _log("imported streamlit")
 
 try:
-    # Importing `ui` executes the Streamlit app.
-    _log("importing ui")
-    import ui  # noqa: F401
-    _log("imported ui")
+    # Import the local ui.py explicitly (avoid name collisions with any installed "ui" package).
+    _log("loading local ui.py")
+    import importlib.util
+    from pathlib import Path
+
+    ui_path = Path(__file__).resolve().with_name("ui.py")
+    if not ui_path.exists():
+        raise FileNotFoundError(f"Missing ui.py at {ui_path}")
+
+    spec = importlib.util.spec_from_file_location("ctba_ui", ui_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load module spec for {ui_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _log(f"loaded ui from {ui_path}")
 except Exception as e:
     # If something goes wrong during import, Streamlit can sometimes show a blank page.
     # Render the exception explicitly so debugging is possible on Streamlit Cloud.
