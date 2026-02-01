@@ -1,0 +1,9 @@
+[theme]
+# Force a consistent, high-contrast light theme on Streamlit Cloud.
+base = "light"
+primaryColor = "#2563eb"              # blue
+backgroundColor = "#f8fafc"           # subtle slate-50
+secondaryBackgroundColor = "#ffffff"  # cards/surfaces
+textColor = "#0f172a"                 # slate-900
+font = "sans serif"
+

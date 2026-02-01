@@ -53,28 +53,7 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-  :root {
-    /* Subtle RGB tri-tone theme */
-    --ctba-accent-r: rgba(239, 68, 68, 0.14);   /* red */
-    --ctba-accent-g: rgba(34, 197, 94, 0.12);   /* green */
-    --ctba-accent-b: rgba(59, 130, 246, 0.14);  /* blue */
-    --ctba-accent: #2563eb;   /* primary blue */
-    --ctba-accent-2: #16a34a; /* secondary green */
-    --ctba-accent-3: #dc2626; /* subtle red for highlights */
-    --ctba-surface: rgba(255, 255, 255, 0.72);
-    --ctba-border: rgba(0, 0, 0, 0.10);
-    --ctba-shadow: 0 10px 30px rgba(17, 24, 39, 0.10);
-  }
-
-  /* Subtle modern background */
-  [data-testid="stAppViewContainer"] {
-    background: radial-gradient(1050px 650px at 18% 8%, var(--ctba-accent-b), rgba(255,255,255,0) 62%),
-                radial-gradient(900px 600px at 80% 12%, var(--ctba-accent-g), rgba(255,255,255,0) 58%),
-                radial-gradient(850px 560px at 65% 85%, var(--ctba-accent-r), rgba(255,255,255,0) 60%),
-                #f8fafc;
-  }
-
-  /* Subtle modern polish (no font overrides) */
+  /* Minimal polish that won't fight Streamlit theme */
   button, input, textarea, select {
     border-radius: 10px !important;
   }
@@ -97,62 +76,6 @@ st.markdown(
       padding-left: 0.75rem;
       padding-right: 0.75rem;
     }
-  }
-
-  /* Make sections feel like cards */
-  .main .block-container > div > div > div[data-testid="stVerticalBlock"] > div {
-    background: transparent;
-  }
-  [data-testid="stExpander"] {
-    border: 1px solid var(--ctba-border) !important;
-    border-radius: 14px !important;
-    background: var(--ctba-surface) !important;
-    box-shadow: var(--ctba-shadow) !important;
-    overflow: hidden;
-  }
-
-  /* Buttons */
-  .stButton > button {
-    border-radius: 12px !important;
-    border: 1px solid rgba(37,99,235,0.24) !important;
-    background: linear-gradient(135deg, rgba(37,99,235,0.96), rgba(22,163,74,0.92)) !important;
-    color: white !important;
-    box-shadow: 0 10px 18px rgba(37,99,235,0.18) !important;
-    transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
-  }
-  .stButton > button:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.03);
-    box-shadow: 0 14px 26px rgba(22,163,74,0.18), 0 10px 18px rgba(37,99,235,0.18) !important;
-  }
-  .stButton > button:active {
-    transform: translateY(0px);
-    box-shadow: 0 10px 18px rgba(37,99,235,0.18) !important;
-  }
-
-  /* Inputs */
-  [data-baseweb="input"] > div,
-  [data-baseweb="textarea"] > div,
-  [data-baseweb="select"] > div {
-    border-radius: 12px !important;
-    border-color: rgba(0,0,0,0.12) !important;
-    background: rgba(255,255,255,0.9) !important;
-  }
-
-  /* Alerts look nicer */
-  [data-testid="stAlert"] {
-    border-radius: 14px !important;
-    border: 1px solid var(--ctba-border) !important;
-    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08) !important;
-  }
-
-  /* Data editor / tables */
-  [data-testid="stDataFrame"] {
-    border-radius: 14px !important;
-    overflow: hidden;
-    border: 1px solid var(--ctba-border) !important;
-    box-shadow: var(--ctba-shadow) !important;
-    background: var(--ctba-surface) !important;
   }
 </style>
 """,
