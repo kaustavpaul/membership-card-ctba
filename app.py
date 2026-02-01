@@ -232,6 +232,8 @@ def load_members_dataframe_appsheet(
     region: str = "www.appsheet.com",
     selector: Optional[str] = None,
     run_as_user_email: Optional[str] = None,
+    timeout_s: int = 30,
+    max_attempts: int = 2,
 ) -> pd.DataFrame:
     """
     Load members from AppSheet REST API into a DataFrame with columns:
@@ -281,7 +283,7 @@ def load_members_dataframe_appsheet(
     if run_as_user_email:
         body["Properties"]["RunAsUserEmail"] = run_as_user_email
 
-    def _call(region_domain: str, *, mode: str, max_attempts: int = 4):
+    def _call(region_domain: str, *, mode: str):
         endpoint = f"https://{region_domain}/api/v2/apps/{app_id}/tables/{quote(table_name, safe='')}/Action"
         if mode == "header_value":
             headers = headers_value
@@ -298,14 +300,15 @@ def load_members_dataframe_appsheet(
             params = params_query
         last_exc: Optional[Exception] = None
         last_resp = None
-        for attempt in range(max_attempts):
+        # Keep Cloud UX responsive: cap retries/timeouts so the UI doesn't look hung.
+        for attempt in range(max(1, int(max_attempts))):
             try:
                 resp = requests.post(
                     endpoint,
                     params=params,
                     headers=headers,
                     json=body,
-                    timeout=(15, 60),
+                    timeout=(10, max(10, int(timeout_s))),
                     allow_redirects=False,
                 )
                 last_resp = resp

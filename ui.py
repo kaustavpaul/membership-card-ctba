@@ -200,12 +200,14 @@ if source == "AppSheet API":
     if fetch:
         st.session_state._last_appsheet_error = None
         try:
-            with st.spinner("Fetching members from AppSheet…"):
+            with st.spinner("Fetching members from AppSheet (can take ~10–30s)…"):
                 df = load_members_dataframe_appsheet(
                     app_id=appsheet_app_id,
                     table_name=appsheet_table,
                     application_access_key=appsheet_key,
                     region=appsheet_region,
+                    timeout_s=30,
+                    max_attempts=2,
                 )
             st.session_state.members_df = df
             stats = getattr(df, "attrs", {}).get("load_stats")
