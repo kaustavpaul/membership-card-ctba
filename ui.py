@@ -12,9 +12,9 @@ from typing import Optional
 import traceback
 import time
 
-import pandas as pd
 import streamlit as st
-from PIL import Image
+
+import pandas as pd
 
 from config import (
     MAX_INDIVIDUAL_DOWNLOADS,
@@ -24,12 +24,7 @@ from config import (
     PREVIEW_WIDTH_MOBILE,
     ZIP_SPOOL_MAX_BYTES,
 )
-from app import (
-    DEFAULT_EXCEL,
-    MembershipCardGenerator,
-    load_members_dataframe,
-    load_members_dataframe_appsheet,
-)
+from data_loaders import load_members_dataframe, load_members_dataframe_appsheet
 from utils import safe_pdf_filename
 
 _UI_DIR = Path(__file__).resolve().parent
@@ -313,10 +308,8 @@ else:
             except Exception as e:
                 st.error(f"Unexpected error reading {data_file.name}: {e}")
 
-    default_path = None
-    if DEFAULT_EXCEL.exists():
-        default_path = str(DEFAULT_EXCEL)
-    elif _FALLBACK_CSV.exists():
+    default_path = str(_UI_DIR / "input" / "template_members.csv")
+    if not os.path.exists(default_path) and _FALLBACK_CSV.exists():
         default_path = str(_FALLBACK_CSV)
     if default_path:
         with st.expander("Use default template (advanced)", expanded=False):
@@ -571,6 +564,9 @@ if st.session_state.members_df is not None and st.session_state.banner_path is n
                     # Reset previous outputs
                     st.session_state.generated_items = []
                     st.session_state.generated_zip = None
+
+                    # Import heavy rendering code only when needed (improves Streamlit Cloud startup)
+                    from app import MembershipCardGenerator
 
                     selected_ids = set(map(str, st.session_state.selected_member_ids))
                     selected_df = df[df["Member_ID"].astype(str).isin(selected_ids)].copy()
