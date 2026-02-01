@@ -5,6 +5,8 @@ Generates PDF business cards with QR codes for each member from CSV or Excel.
 Excel: sheet 'Form Responses 1'; uses existing Member ID column (no computation).
 """
 
+from __future__ import annotations
+
 import csv
 from io import BytesIO
 import os
@@ -561,7 +563,7 @@ class MembershipCardGenerator:
         self._font_member = font_member
         return font_name, font_member
 
-    def load_banner_image(self) -> Image.Image:
+    def load_banner_image(self) -> "Image.Image":
         """Load and cache banner image once per generator instance."""
         from PIL import Image
 
@@ -777,7 +779,7 @@ class MembershipCardGenerator:
         
         return card
     
-    def create_pdf_bytes(self, card_img: Image.Image) -> bytes:
+    def create_pdf_bytes(self, card_img: "Image.Image") -> bytes:
         """
         Create a PDF (bytes) from card image (no filesystem writes).
 
@@ -798,7 +800,7 @@ class MembershipCardGenerator:
         c.save()
         return buf.getvalue()
 
-    def create_pdf(self, card_img: Image.Image, output_path: str) -> None:
+    def create_pdf(self, card_img: "Image.Image", output_path: str) -> None:
         """
         Create PDF from card image.
         
