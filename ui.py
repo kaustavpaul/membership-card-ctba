@@ -112,9 +112,6 @@ if 'generated_count' not in st.session_state:
 if "selected_member_ids" not in st.session_state:
     # Track selection by Member_ID (stable across filtering/search)
     st.session_state.selected_member_ids = []
-if "selected_member_ids_widget" not in st.session_state:
-    # Widget state for multiselect (must not be directly reassigned after widget instantiates)
-    st.session_state.selected_member_ids_widget = []
 if "search_term" not in st.session_state:
     # Applied search term (use a form to avoid rerun-per-keystroke)
     st.session_state.search_term = ""
@@ -448,11 +445,15 @@ if st.session_state.members_df is not None and st.session_state.banner_path is n
 
     # Selected members (full-width, so more names are visible)
     id_to_name = dict(zip(df["Member_ID"].astype(str), df["Name"].astype(str)))
-    # Keep widget state in sync BEFORE creating widget this run
-    st.session_state.selected_member_ids_widget = list(st.session_state.selected_member_ids)
 
     def _sync_multiselect_to_selection():
         st.session_state.selected_member_ids = sorted(set(map(str, st.session_state.selected_member_ids_widget)))
+
+    # If selection changed elsewhere (table/buttons), reset the widget state to match.
+    if "selected_member_ids_widget" in st.session_state and set(st.session_state.selected_member_ids_widget) != set(
+        st.session_state.selected_member_ids
+    ):
+        del st.session_state["selected_member_ids_widget"]
 
     st.multiselect(
         "Selected members",
