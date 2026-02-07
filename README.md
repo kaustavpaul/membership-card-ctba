@@ -41,8 +41,26 @@ pip-audit
 
 The easiest way to use the application is through the interactive web interface:
 
+**From the project folder** (required):
+
 ```bash
-streamlit run streamlit_app.py
+cd /path/to/membership-card
+./run_ui.sh
+```
+
+If that fails, try:
+
+```bash
+./run_local.sh
+# or: python3 -m streamlit run ui.py
+# or: streamlit run streamlit_app.py
+```
+
+If you see *"Streamlit not found"* or *"command not found: streamlit"*, install and run:
+
+```bash
+pip install -r requirements.txt
+python3 -m streamlit run ui.py
 ```
 
 This will open a web browser where you can:

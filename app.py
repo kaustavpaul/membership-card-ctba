@@ -607,15 +607,16 @@ class MembershipCardGenerator:
     def generate_qr_code(self, member_id: str, name: str):
         """
         Generate QR code for a member.
+        Encodes only the Member ID (numeric) for scanning.
         
         Args:
-            member_id: Unique member ID
-            name: Member name
+            member_id: Unique member ID (numeric)
+            name: Member name (unused; kept for API compatibility)
             
         Returns:
             PIL Image of the QR code
         """
-        # QR code data: ONLY the Member ID
+        # QR code data: only the Member ID (numeric)
         qr_data = str(member_id).strip()
         
         import qrcode
@@ -644,16 +645,17 @@ class MembershipCardGenerator:
     ):
         """
         Create a membership card: banner on top, QR code at center, then:
-        Full Name, 'Annual Member CTBA 2026', Membership Type, Adult/Kids counts.
+        Full Name, 'Annual Member CTBA 2026', Membership Type.
+        Adult/child counts are no longer shown on the card (params kept for API compatibility).
         
         Args:
             name: Member name
-            member_id: Member ID
+            member_id: Member ID (numeric; used in QR code)
             qr_img: QR code image
             banner_img: Banner image
             membership_type: Membership type (optional)
-            adult: Adult count (optional)
-            child: Child/Kids count (optional)
+            adult: Unused (kept for compatibility)
+            child: Unused (kept for compatibility)
             
         Returns:
             Combined card image
@@ -751,24 +753,6 @@ class MembershipCardGenerator:
                 draw.text((x, y), line, font=font_member, fill=text_color)
                 y += font_size + 6
 
-        # Adult / Kids counts (same font size)
-        adult_s = str(adult).strip()
-        child_s = str(child).strip()
-        if adult_s.lower() == "nan":
-            adult_s = ""
-        if child_s.lower() == "nan":
-            child_s = ""
-        if adult_s or child_s:
-            counts = []
-            if adult_s:
-                counts.append(f"Adults: {adult_s}")
-            if child_s:
-                counts.append(f"Kids: {child_s}")
-            counts_text = "  ".join(counts)
-            y = text_start_y + NAME_TO_MEMBER_GAP_PX * 3
-            x = (card_width_px - get_text_width(counts_text, font_member)) // 2
-            draw.text((x, y), counts_text, font=font_member, fill=text_color)
-        
         # Thin black border with small corner curve (works consistently in PDF)
         draw.rounded_rectangle(
             [(1, 1), (card_width_px - 2, card_height_px - 2)],

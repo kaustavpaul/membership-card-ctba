@@ -509,6 +509,15 @@ if st.session_state.members_df is not None and st.session_state.banner_path is n
     # Generation section
     st.markdown("---")
     st.header("🎨 Generate Cards")
+
+    st.markdown("**Output format**")
+    out_col1, out_col2, out_col3 = st.columns(3)
+    with out_col1:
+        st.checkbox("PDF", value=True, key="output_pdf")
+    with out_col2:
+        st.checkbox("Apple Wallet — Coming Soon", value=False, disabled=True, key="output_apple_wallet")
+    with out_col3:
+        st.checkbox("Google Wallet — Coming Soon", value=False, disabled=True, key="output_google_wallet")
     
     selected_count = len(st.session_state.selected_member_ids)
     st.info(f"**{selected_count}** member(s) selected for card generation")
