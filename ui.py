@@ -121,6 +121,9 @@ if "generated_items" not in st.session_state:
 if "generated_zip" not in st.session_state:
     # For >10: {"zip_bytes": bytes, "zip_name": str, "count": int}
     st.session_state.generated_zip = None
+if "_member_table_key" not in st.session_state:
+    # Bump when Select All / Deselect All is used so data_editor re-inits with new selection
+    st.session_state._member_table_key = 0
 if "_tmp_data_path" not in st.session_state:
     st.session_state._tmp_data_path = None
 if "_tmp_banner_path" not in st.session_state:
@@ -380,8 +383,10 @@ if st.session_state.members_df is not None and st.session_state.banner_path is n
     with col2:
         if st.button("✅ Select All", use_container_width=True):
             st.session_state.selected_member_ids = list(df["Member_ID"].astype(str))
+            st.session_state._member_table_key = st.session_state.get("_member_table_key", 0) + 1
         if st.button("❌ Deselect All", use_container_width=True):
             st.session_state.selected_member_ids = []
+            st.session_state._member_table_key = st.session_state.get("_member_table_key", 0) + 1
     
     # Create scrollable table for member selection
     st.markdown("### Member List")
@@ -447,7 +452,10 @@ if st.session_state.members_df is not None and st.session_state.banner_path is n
     id_to_name = dict(zip(df["Member_ID"].astype(str), df["Name"].astype(str)))
 
     def _sync_multiselect_to_selection():
-        st.session_state.selected_member_ids = sorted(set(map(str, st.session_state.selected_member_ids_widget)))
+        new_val = sorted(set(map(str, st.session_state.selected_member_ids_widget)))
+        # Don't overwrite a large selection with empty (widget can be stale after Select All)
+        if len(new_val) > 0 or len(st.session_state.selected_member_ids) <= 20:
+            st.session_state.selected_member_ids = new_val
 
     # If selection changed elsewhere (table/buttons), reset the widget state to match.
     if "selected_member_ids_widget" in st.session_state and set(st.session_state.selected_member_ids_widget) != set(
@@ -474,37 +482,35 @@ if st.session_state.members_df is not None and st.session_state.banner_path is n
         "Member_ID": st.column_config.TextColumn("Member ID", width="large"),
     }
     
-    # Display as scrollable table with fixed height (creates internal scrollbar)
+    # Display as scrollable table with fixed height (creates internal scrollbar).
+    # Key includes _member_table_key so Select All / Deselect All force re-init (avoids stale checkbox state).
     edited_df = st.data_editor(
         display_df_for_editor,
         column_config=column_config,
         hide_index=True,
         use_container_width=True,
         height=500,  # Fixed height - creates internal scrollbar
-        key=f"member_table_{hash(search_term)}"  # changes only when you Apply search
+        key=f"member_table_{hash(search_term)}_{st.session_state._member_table_key}",
     )
     
-    # Sync selection state from the edited dataframe.
-    # Key behavior: filtering/searching should NEVER implicitly deselect anything.
-    # We only remove if we detect an explicit True -> False toggle for a row that was shown as selected.
+    # Sync selection state from the edited dataframe only when selection is small.
+    # With 50+ rows, the data_editor often returns stale/partial checkbox state, which would
+    # clear "Select All". So when many are selected, never let the table overwrite selection.
     sel = set(map(str, st.session_state.selected_member_ids))
     visible_ids = display_df["Member_ID"].astype(str).tolist()
-    current_state = {}
-    for idx, row in edited_df.iterrows():
-        if idx >= len(visible_ids):
-            continue
-        mid = visible_ids[idx]
-        checked = bool(row.get("Select"))
-        current_state[mid] = checked
-
-        was_checked = bool(baseline_state.get(mid, False))
-        if checked and not was_checked:
-            sel.add(mid)
-        elif (not checked) and was_checked:
-            sel.discard(mid)
-        # If baseline was False and remains False, do nothing (prevents implicit deselects).
+    sync_from_editor = len(sel) <= 20
+    if sync_from_editor:
+        for idx, row in edited_df.iterrows():
+            if idx >= len(visible_ids):
+                continue
+            mid = visible_ids[idx]
+            checked = bool(row.get("Select"))
+            was_checked = bool(baseline_state.get(mid, False))
+            if checked and not was_checked:
+                sel.add(mid)
+            elif (not checked) and was_checked:
+                sel.discard(mid)
     st.session_state.selected_member_ids = sorted(sel)
-    # Table state is derived from selected_member_ids; no need to persist a second copy.
     
     # Generation section
     st.markdown("---")

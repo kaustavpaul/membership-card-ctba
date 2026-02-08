@@ -21,9 +21,14 @@ try:
     # Import the local ui.py explicitly (avoid name collisions with any installed "ui" package).
     _log("loading local ui.py")
     import importlib.util
+    import sys
     from pathlib import Path
 
-    ui_path = Path(__file__).resolve().with_name("ui.py")
+    app_dir = Path(__file__).resolve().parent
+    if str(app_dir) not in sys.path:
+        sys.path.insert(0, str(app_dir))
+
+    ui_path = app_dir / "ui.py"
     if not ui_path.exists():
         raise FileNotFoundError(f"Missing ui.py at {ui_path}")
 

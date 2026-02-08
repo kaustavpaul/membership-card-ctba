@@ -91,7 +91,8 @@ In the UI sidebar, switch **Data source** to **AppSheet API**, then provide:
 The app fetches rows via the AppSheet “Find” API and maps them into the required columns (`Member ID`, `Full Name`, `Membership Type`, `Adult`, `Child`).
 
 ### Streamlit Cloud deployment
-If you deploy this repo on Streamlit Cloud, set the **main file path** to `streamlit_app.py`.
+- **Main file path must be `streamlit_app.py`** (not `ui.py`). This entrypoint loads the real UI and avoids module name collisions that cause blank pages.
+- If the app is slow or fails to load: check the Cloud app’s **Settings → Main file path** is `streamlit_app.py`, then check **Manage app → Logs** for errors.
 
 ### 💻 Command Line
 
